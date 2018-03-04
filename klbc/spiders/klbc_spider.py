@@ -43,7 +43,7 @@ class KlbcSpider(Spider):
 	client.drop_database('klbc')
 	db = client.klbc
 	collection = db.laws
-######################
+###################### crawl with page
 	def parse(self, response):
 		original_url = "http://vbpl.vn/VBQPPL_UserControls/Publishing_22/TimKiem/p_KetQuaTimKiemVanBan.aspx?&IsVietNamese=True&DivID=tabVB_lv1_01"
 		row_per_page = "&RowPerPage=" + settings['ROW_PER_PAGE']
@@ -57,39 +57,39 @@ class KlbcSpider(Spider):
 			yield scrapy.Request(url, callback = self.parse_page)
 # crawl with array value
 
-	def parse(self, response):
-		original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
-		# id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981","11635","12324","26403","16868","27708","12331","12318","26404","12661","9683","96115","27615","95942","36884","12272","32603","20981","26759","19476","22072","17750","8222","21957","6141","96117","10427","96172","16872","7755","6153","13914","22840","46747","46809","40742","36824","96122","13639","20998","20987"]
-		id_list = ["46809","127253"]
-		for i in id_list:
-			meta = {}
-			meta['item_id'] = i
-			meta['ten_vb'] = ''
-			meta['mo_ta'] = ''
-			original_url_tmp = original_url + i 
-			yield scrapy.Request(original_url_tmp, callback = self.parse_document, meta = meta)
-
-
-	# def parse_page(self,response):
-	# 	items  = response.xpath('//div[@class="item"]//p[@class="title"]')
+	# def parse(self, response):
 	# 	original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
-	# 	descriptions = response.xpath('//div[@class="item"]//div[@class="left"]/div[@class="des"]/p/text()')
-	# 	for i in items:
-	# 		l = i.xpath('a/@href').extract()[0]
-	# 		item_id = (l.split('ItemID=')[1]).split('&')[0]
-	# 		name = ""
-	# 		description = ""
-	# 		try:
-	# 			name = (i.xpath('a/text()').extract_first()).strip()
-	# 			description = descriptions.extract()[items.index(i)].strip()
-	# 		except Exception:
-	# 			print "null"
+	# 	# id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981","11635","12324","26403","16868","27708","12331","12318","26404","12661","9683","96115","27615","95942","36884","12272","32603","20981","26759","19476","22072","17750","8222","21957","6141","96117","10427","96172","16872","7755","6153","13914","22840","46747","46809","40742","36824","96122","13639","20998","20987"]
+	# 	id_list = ["46809","127253"]
+	# 	for i in id_list:
 	# 		meta = {}
-	# 		meta['item_id'] = item_id
-	# 		meta['ten_vb'] = name
-	# 		meta['mo_ta'] = description
-	# 		url = original_url + item_id
-	# 		yield scrapy.Request(url,callback =self.parse_document,meta = meta) 
+	# 		meta['item_id'] = i
+	# 		meta['ten_vb'] = ''
+	# 		meta['mo_ta'] = ''
+	# 		original_url_tmp = original_url + i 
+	# 		yield scrapy.Request(original_url_tmp, callback = self.parse_document, meta = meta)
+
+
+	def parse_page(self,response):
+		items  = response.xpath('//div[@class="item"]//p[@class="title"]')
+		original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
+		descriptions = response.xpath('//div[@class="item"]//div[@class="left"]/div[@class="des"]/p/text()')
+		for i in items:
+			l = i.xpath('a/@href').extract()[0]
+			item_id = (l.split('ItemID=')[1]).split('&')[0]
+			name = ""
+			description = ""
+			try:
+				name = (i.xpath('a/text()').extract_first()).strip()
+				description = descriptions.extract()[items.index(i)].strip()
+			except Exception:
+				print "null"
+			meta = {}
+			meta['item_id'] = item_id
+			meta['ten_vb'] = name
+			meta['mo_ta'] = description
+			url = original_url + item_id
+			yield scrapy.Request(url,callback =self.parse_document,meta = meta) 
 
 
 	def parse_document(self, response):
