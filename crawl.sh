@@ -7,12 +7,15 @@ scrapy crawl klbc
 rm -r *.json
 rm -r *.tsv
 mongoexport --db klbc --collection laws --out ./laws.json
-# cat ./laws.json | jq -r '[.item_id,.full_text,.so_ki_hieu,.ngay_ban_hanh,.ngay_cong_bao,.loai,.loai_van_ban,.nguon_thu_thap,.pham_vi,.ngay_co_hieu_luc] | @tsv' > ./laws.tsv
+# cat ./laws.json | jq -r '[.item_id,.ten_vb,.full_text,.full_html,.so_ki_hieu,.ngay_ban_hanh,.ngay_cong_bao,.loai,.loai_van_ban,.nguon_thu_thap,.pham_vi,.ngay_co_hieu_luc] | @tsv' > ./laws.tsv
 # cat ./laws.json | jq -r '[.item_id,.full_text,.full_html] | @tsv' > ./laws.tsv
 # cat ./laws.json | jq -r '[.item_id,.full_text,.full_html,.mo_ta,.ten_vb] | @tsv' > ./laws.tsv
-cat ./laws.json | jq -r '[.item_id,.co_quan_ban_hanh,.nguoi_ki,.chuc_danh] | @tsv' > ./laws.tsv
+cat ./laws.json | jq -r '[.item_id,.loai,.full_text,.full_html,.index_html,
+  .so_ki_hieu,.ngay_ban_hanh,.ngay_cong_bao,.loai_van_ban,.nguon_thu_thap,
+  .co_quan_ban_hanh,.nguoi_ki,.chuc_danh,.pham_vi,
+  .ngay_co_hieu_luc,.tinh_trang_hieu_luc,.count_click,.created_at,.updated_at]| @tsv' > ./articles.tsv
 
-
+cat ./laws.json | jq -r '[.item_id,.full_text]| @tsv' > ./laws.tsv
 # thuoc tinh
 
 # item_id

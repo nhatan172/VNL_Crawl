@@ -104,5 +104,5 @@ MONGODB_DB = "klbc"
 MONGODB_COLLECTION = "laws"
 ROW_PER_PAGE = "10"
 FROM_PAGE = 1
-TO_PAGE = 3
+TO_PAGE = 300
 DIRECTORY = "klbc_result"

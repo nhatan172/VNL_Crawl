@@ -7,6 +7,8 @@ import json
 import codecs
 import io
 import re 
+import time
+import datetime
 
 from scrapy.conf import settings
 from scrapy import Spider
@@ -55,40 +57,39 @@ class KlbcSpider(Spider):
 			yield scrapy.Request(url, callback = self.parse_page)
 # crawl with array value
 
-	# def parse(self, response):
-	# 	original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
-	# 	#id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981"]
-	# 	id_list = ["11635"]
-
-	# 	for i in id_list:
-	# 		meta = {}
-	# 		meta['item_id'] = i
-	# 		meta['ten_vb'] = ''
-	# 		meta['mo_ta'] = ''
-	# 		original_url_tmp = original_url + i 
-	# 		yield scrapy.Request(original_url_tmp, callback = self.parse_document, meta = meta)
-
-
-	def parse_page(self,response):
-		items  = response.xpath('//div[@class="item"]//p[@class="title"]')
+	def parse(self, response):
 		original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
-		descriptions = response.xpath('//div[@class="item"]//div[@class="left"]/div[@class="des"]/p/text()')
-		for i in items:
-			l = i.xpath('a/@href').extract()[0]
-			item_id = (l.split('ItemID=')[1]).split('&')[0]
-			name = ""
-			description = ""
-			try:
-				name = (i.xpath('a/text()').extract_first()).strip()
-				description = descriptions.extract()[items.index(i)].strip()
-			except Exception:
-				print "null"
+		# id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981","11635","12324","26403","16868","27708","12331","12318","26404","12661","9683","96115","27615","95942","36884","12272","32603","20981","26759","19476","22072","17750","8222","21957","6141","96117","10427","96172","16872","7755","6153","13914","22840","46747","46809","40742","36824","96122","13639","20998","20987"]
+		id_list = ["46809","127253"]
+		for i in id_list:
 			meta = {}
-			meta['item_id'] = item_id
-			meta['ten_vb'] = name
-			meta['mo_ta'] = description
-			url = original_url + item_id
-			yield scrapy.Request(url,callback =self.parse_document,meta = meta) 
+			meta['item_id'] = i
+			meta['ten_vb'] = ''
+			meta['mo_ta'] = ''
+			original_url_tmp = original_url + i 
+			yield scrapy.Request(original_url_tmp, callback = self.parse_document, meta = meta)
+
+
+	# def parse_page(self,response):
+	# 	items  = response.xpath('//div[@class="item"]//p[@class="title"]')
+	# 	original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
+	# 	descriptions = response.xpath('//div[@class="item"]//div[@class="left"]/div[@class="des"]/p/text()')
+	# 	for i in items:
+	# 		l = i.xpath('a/@href').extract()[0]
+	# 		item_id = (l.split('ItemID=')[1]).split('&')[0]
+	# 		name = ""
+	# 		description = ""
+	# 		try:
+	# 			name = (i.xpath('a/text()').extract_first()).strip()
+	# 			description = descriptions.extract()[items.index(i)].strip()
+	# 		except Exception:
+	# 			print "null"
+	# 		meta = {}
+	# 		meta['item_id'] = item_id
+	# 		meta['ten_vb'] = name
+	# 		meta['mo_ta'] = description
+	# 		url = original_url + item_id
+	# 		yield scrapy.Request(url,callback =self.parse_document,meta = meta) 
 
 
 	def parse_document(self, response):
@@ -99,9 +100,10 @@ class KlbcSpider(Spider):
 		div_content = response.xpath("//div[@class='fulltext']/div[2]")
 		div_content1 = response.xpath("//a[@id='A3']/@href").extract_first()
 		meta['full_text'] = ""
-		meta['full_html'] = ""
+		meta['full_html'] = "a"
 		content = div_content.extract_first()
-
+		if 'viewvbgoc' in content:
+			content = None
 		if content is not None:
 			if not os.path.exists(directory):
 				os.makedirs(directory)
@@ -111,12 +113,14 @@ class KlbcSpider(Spider):
 			meta['full_html'] = content.encode('utf-8')
 			a = html2text.HTML2Text()
 			a.ignore_links = True
+			a.bypass_tables = True
 			b = a.handle(content).encode('utf-8')
+			b = b.replace(' '," ")
+			b = re.sub(r'<table(.{1}(?!</table))+.{1}</table>',"\\n",b, flags=re.M|re.S)
 			meta['full_text'] = re.sub(r"\n(?!\n)"," ",b)
 			fulltext_file.write(b)
 			url = "http://vbpl.vn/TW/Pages/vbpq-thuoctinh.aspx?ItemID=" + meta['item_id']
 			yield scrapy.Request(url, callback = self.parse_attribute, meta = meta)
-
 		if div_content1 is not None:
 			content = div_content1.split(',')[1]
 			content1 = content.split("'")[1]
@@ -153,7 +157,12 @@ class KlbcSpider(Spider):
 										  .xpath('//tr[4]/td[2]/text()').extract())
 		list_properties['ngay_cong_bao'] = check_data(div_properties
 										 .xpath('//tr[4]/td[4]/text()').extract())
-
+		if "." in list_properties['ngay_cong_bao']:
+			list_properties['ngay_cong_bao'] = "1/11/0001"
+		if "." in list_properties['ngay_co_hieu_luc']:
+			list_properties['ngay_co_hieu_luc'] = "1/11/0001"
+		if "." in list_properties['ngay_ban_hanh']:
+			list_properties['ngay_ban_hanh'] = "1/11/0001"
 		row = 5
 
 		if div_properties.xpath('//tr['+str(row)+']/td[1]/text()').extract()[0].strip() == to_unicode('Ngành'):
@@ -218,6 +227,14 @@ class KlbcSpider(Spider):
 		list_properties['ngay_cong_bao'] = meta['ngay_cong_bao']
 		list_properties['nganh'] = meta['nganh']
 		list_properties['linh_vuc'] = meta['linh_vuc']
+		list_properties['index_html'] = ""
+		list_properties['count_click'] = 0
+		ts = time.time()
+		st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+		# list_properties['ngay_co_hieu_luc'] = '26/04/1993'
+		# list_properties['ngay_cong_bao'] = '26/04/1993'
+		list_properties['created_at'] = st
+		list_properties['updated_at'] = st
 		temp = int(meta['tong_so_co_quan'])
 
 		list_properties['tong_so_co_quan'] = temp
@@ -239,7 +256,30 @@ class KlbcSpider(Spider):
 		list_properties['pham_vi'] = meta['pham_vi']
 		list_properties['thong_tin_ap_dung'] = meta['thong_tin_ap_dung']
 		list_properties['tinh_trang_hieu_luc'] = meta['tinh_trang_hieu_luc']
-
+		list_properties['vb_can_cu']="_"
+		list_properties['vb_dan_chieu']="_"
+		list_properties['vb_bi_het_hieu_luc']="_"
+		list_properties['vb_sua_doi_bo_sung']="_"
+		list_properties['vb_bi_thay_the']="_"
+		list_properties['vb_bi_bo_mot_phan']="_"
+		list_properties['vb_duoc_huong_dan']="_"
+		list_properties['vb_duoc_quy_dinh_chi_tiet']="_"
+		list_properties['vb_het_hieu_luc']="_"
+		list_properties['vb_bi_het_hieu_luc_1_phan']="_"
+		list_properties['vb_bi_dinh_chi']="_"
+		list_properties['vb_bi_dinh_chi_1_phan']="_"
+		list_properties['vb_duoc_bo_sung']="_"
+		list_properties['vb_duoc_sua_doi']="_"
+		list_properties['vb_hien_thoi']="_"
+		list_properties['vb_lien_quan_khac']="_"
+		list_properties['vb_huong_dan']="_"
+		list_properties['vb_quy_dinh_chi_tiet']="_"
+		list_properties['vb_quy_dinh_het_hieu_luc']="_"
+		list_properties['vb_quy_dinh_het_hieu_luc_1_phan']="_"
+		list_properties['vb_dinh_chi']="_"
+		list_properties['vb_dinh_chi_1_phan']="_"
+		list_properties['vb_bo_sung']="_"
+		list_properties['vb_sua_doi']="_"
 		div_related_documents = response.xpath('//div[@class="vbLienQuan"]')
 		number_rows = len(div_related_documents.xpath('//div[@class="content"]/table/tbody/tr'))
 		for i in range(0, number_rows):
@@ -305,7 +345,7 @@ class KlbcSpider(Spider):
 					.extract()).split("=")[1]
 				list_properties[doc_type +'_'+ `j + 1`] = item_related_id
 				tmp.append(item_related_id)
-			list_properties[doc_type] = ', '.join(tmp)
+			list_properties[doc_type] ="_" + ','.join(tmp)
 		self.collection.insert_one(list_properties)
 
 
