@@ -44,30 +44,31 @@ class KlbcSpider(Spider):
 	db = client.klbc
 	collection = db.laws
 ###################### crawl with page
-	def parse(self, response):
-		original_url = "http://vbpl.vn/VBQPPL_UserControls/Publishing_22/TimKiem/p_KetQuaTimKiemVanBan.aspx?&IsVietNamese=True&DivID=tabVB_lv1_01"
-		row_per_page = "&RowPerPage=" + settings['ROW_PER_PAGE']
+	# def parse(self, response):
+	# 	original_url = "http://vbpl.vn/VBQPPL_UserControls/Publishing_22/TimKiem/p_KetQuaTimKiemVanBan.aspx?&IsVietNamese=True&DivID=tabVB_lv1_01"
+	# 	row_per_page = "&RowPerPage=" + settings['ROW_PER_PAGE']
 	
 
-		# drop database
-		for i in range(settings['FROM_PAGE'], settings['TO_PAGE']):
-			page = "&Page=" + `i`
+	# 	# drop database
+	# 	for i in range(settings['FROM_PAGE'], settings['TO_PAGE']):
+	# 		page = "&Page=" + `i`
 		
-			url = original_url + page + row_per_page
-			yield scrapy.Request(url, callback = self.parse_page)
-# crawl with array value
+	# 		url = original_url + page + row_per_page
+	# 		yield scrapy.Request(url, callback = self.parse_page)
 
-	# def parse(self, response):
-	# 	original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
-	# 	# id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981","11635","12324","26403","16868","27708","12331","12318","26404","12661","9683","96115","27615","95942","36884","12272","32603","20981","26759","19476","22072","17750","8222","21957","6141","96117","10427","96172","16872","7755","6153","13914","22840","46747","46809","40742","36824","96122","13639","20998","20987"]
-	# 	id_list = ["46809","127253"]
-	# 	for i in id_list:
-	# 		meta = {}
-	# 		meta['item_id'] = i
-	# 		meta['ten_vb'] = ''
-	# 		meta['mo_ta'] = ''
-	# 		original_url_tmp = original_url + i 
-	# 		yield scrapy.Request(original_url_tmp, callback = self.parse_document, meta = meta)
+#crawl with array value
+
+	def parse(self, response):
+		original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
+		# id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981","11635","12324","26403","16868","27708","12331","12318","26404","12661","9683","96115","27615","95942","36884","12272","32603","20981","26759","19476","22072","17750","8222","21957","6141","96117","10427","96172","16872","7755","6153","13914","22840","46747","46809","40742","36824","96122","13639","20998","20987"]
+		id_list = ["127392","127385","126445","127253"]
+		for i in id_list:
+			meta = {}
+			meta['item_id'] = i
+			meta['ten_vb'] = ''
+			meta['mo_ta'] = ''
+			original_url_tmp = original_url + i 
+			yield scrapy.Request(original_url_tmp, callback = self.parse_document, meta = meta)
 
 
 	def parse_page(self,response):
@@ -110,12 +111,13 @@ class KlbcSpider(Spider):
 			fulltext_file = open(fulltext_file_name, "w")
 			fulltext_file_html = open(fulltext_file_name_with_html,"w")
 			fulltext_file_html.write(content.encode('utf-8'))
+			content = re.sub(r'<a[^<]+thuvienphapluat[^<]+</a>(.(?!<a))*.{1}','',content,flags=re.M|re.S|re.DOTALL)
 			meta['full_html'] = content.encode('utf-8')
 			a = html2text.HTML2Text()
 			a.ignore_links = True
 			a.bypass_tables = True
 			b = a.handle(content).encode('utf-8')
-			b = b.replace(' '," ")
+			b = b.replace(' ',' ')
 			b = re.sub(r'<table(.{1}(?!</table))+.{1}</table>',"\\n",b, flags=re.M|re.S)
 			meta['full_text'] = re.sub(r"\n(?!\n)"," ",b)
 			fulltext_file.write(b)
@@ -205,7 +207,7 @@ class KlbcSpider(Spider):
 												.xpath('//tr['+str(row+1)+']/td').extract()))
 		list_properties['tinh_trang_hieu_luc'] = check_data(div_properties
 												  .xpath('//tr['+str(row+2)+']/td/text()').extract())
-
+		list_properties['tinh_trang_hieu_luc'] = re.sub(r'.+:','',list_properties['tinh_trang_hieu_luc'])
 		url = "http://vbpl.vn/TW/Pages/vbpq-vanbanlienquan.aspx?ItemID=" + meta['item_id']
 		yield scrapy.Request(url, callback = self.parse_related_documents, meta = list_properties)
 

@@ -15,7 +15,7 @@ cat ./laws.json | jq -r '[.item_id,.loai,.full_text,.full_html,.index_html,
   .co_quan_ban_hanh,.nguoi_ki,.chuc_danh,.pham_vi,
   .ngay_co_hieu_luc,.tinh_trang_hieu_luc,.count_click,.created_at,.updated_at]| @tsv' > ./articles.tsv
 
-cat ./laws.json | jq -r '[.item_id,.full_text]| @tsv' > ./laws.tsv
+# cat ./laws.json | jq -r '[.item_id,.full_text]| @tsv' > ./laws.tsv
 # thuoc tinh
 
 # item_id
