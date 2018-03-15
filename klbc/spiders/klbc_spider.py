@@ -61,7 +61,7 @@ class KlbcSpider(Spider):
 	def parse(self, response):
 		original_url = "http://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID="
 		# id_list = ["32970","32603","27708","97167","26403","26404","12272","12661","16868","26759","17750","13914","21957","22072","21957","20981","11635","12324","26403","16868","27708","12331","12318","26404","12661","9683","96115","27615","95942","36884","12272","32603","20981","26759","19476","22072","17750","8222","21957","6141","96117","10427","96172","16872","7755","6153","13914","22840","46747","46809","40742","36824","96122","13639","20998","20987"]
-		id_list = ["127392","127385","126445","127253"]
+		id_list = ["72434","127385","86936","6894"]
 		for i in id_list:
 			meta = {}
 			meta['item_id'] = i
@@ -203,6 +203,11 @@ class KlbcSpider(Spider):
 
 		list_properties['pham_vi'] = check_data(div_properties
 										.xpath('//tr['+str(row)+']/td[2]/ul/li/text()').extract())
+		list_properties['pham_vi'] =  list_properties['pham_vi'].encode('utf-8')
+		list_properties['pham_vi'] =  list_properties['pham_vi'].replace('TP.', '')
+		list_properties['pham_vi'] =  list_properties['pham_vi'].replace('Tỉnh', '')
+		list_properties['pham_vi'] = re.sub(r'\s\s+',' ',list_properties['pham_vi'],re.M)
+		list_properties['pham_vi'] = list_properties['pham_vi'].strip()
 		list_properties['thong_tin_ap_dung'] = html2text.html2text(check_data(div_properties
 												.xpath('//tr['+str(row+1)+']/td').extract()))
 		list_properties['tinh_trang_hieu_luc'] = check_data(div_properties
